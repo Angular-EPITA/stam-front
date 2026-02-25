@@ -26,3 +26,10 @@ jobs:
       
     - name: Build
       run: npm run build
+
+    - name: Sauvegarder l'application compilée (Artéfact)
+      uses: actions/upload-artifact@v4
+      with:
+        name: stam-front
+        path: dist/stam-front/
+        retention-days: 30
