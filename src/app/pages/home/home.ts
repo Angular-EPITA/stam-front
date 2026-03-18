@@ -10,10 +10,8 @@ import { GameService } from '../../services/game.service';
     styleUrl: './home.scss',
 })
 export class HomeComponent implements OnInit {
-
-    constructor(private gameService: GameService,
-        private destroyRef: DestroyRef
-    ) {}
+    private readonly gameService = inject(GameService);
+    private readonly destroyRef = inject(DestroyRef);
 
     games: Game[] = [];
 
