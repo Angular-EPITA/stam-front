@@ -1,14 +1,29 @@
 // Page d'accueil — affiche les derniers jeux ajoutés
-import { Component } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Game } from '../../models/game.interface';
-import { MOCK_GAMES } from '../../mocks/games.mock';
+import { GameService } from '../../services/game.service';
 
 @Component({
     selector: 'app-home',
     templateUrl: './home.html',
     styleUrl: './home.scss',
 })
-export class HomeComponent {
-    // Données mock, à remplacer par un appel HTTP quand l'API sera prête
-    games: Game[] = MOCK_GAMES;
+export class HomeComponent implements OnInit {
+
+    constructor(private gameService: GameService,
+        private destroyRef: DestroyRef
+    ) {}
+
+    games: Game[] = [];
+
+    ngOnInit(): void {
+        this.gameService
+            .getLatest()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (games) => (this.games = games),
+                error: (err) => console.error('Erreur lors du chargement des jeux', err),
+            });
+    }
 }
