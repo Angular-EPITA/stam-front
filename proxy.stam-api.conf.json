@@ -1,0 +1,8 @@
+{
+  "/api": {
+    "target": "http://stam-api:8081",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  }
+}
