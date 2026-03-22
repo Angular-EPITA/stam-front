@@ -34,7 +34,7 @@ export class HomeComponent implements OnInit {
     }
 
     loadGames(): void {
-        const filters: any = {};
+        const filters: { genre?: string; year?: number; search?: string } = {};
         if (this.currentGenre) filters.genre = this.currentGenre;
         if (this.currentYear) filters.year = Number(this.currentYear);
         if (this.currentSearch) filters.search = this.currentSearch;
@@ -49,7 +49,7 @@ export class HomeComponent implements OnInit {
     }
 
     onFilterChange(type: 'search' | 'genre' | 'year', value: string): void {
-        const queryParams: any = { ...this.route.snapshot.queryParams };
+        const queryParams: Record<string, string | undefined> = { ...this.route.snapshot.queryParams };
         
         if (value) {
             queryParams[type] = value;
