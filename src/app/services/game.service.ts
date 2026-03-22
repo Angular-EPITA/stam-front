@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { Game } from '../models/game.interface';
@@ -32,11 +32,23 @@ export class GameService {
     /**
      * Récupère la liste paginée depuis l'API et la mappe vers le modèle UI `Game`.
      */
-    getGames(page = 0, size = 10): Observable<Game[]> {
+    getGames(page = 0, size = 10, filters?: { genre?: string; year?: number; search?: string }): Observable<Game[]> {
+        let params = new HttpParams()
+            .set('page', page.toString())
+            .set('size', size.toString());
+
+        if (filters?.genre) {
+            params = params.set('genre', filters.genre);
+        }
+        if (filters?.year) {
+            params = params.set('year', filters.year.toString());
+        }
+        if (filters?.search) {
+            params = params.set('search', filters.search);
+        }
+
         return this.http
-            .get<PageApi<GameApi>>(`${this.baseUrl}/games`, {
-                params: { page, size },
-            })
+            .get<PageApi<GameApi>>(`${this.baseUrl}/games`, { params })
             .pipe(
                 map((res) =>
                     (res.content ?? []).map((g) => ({

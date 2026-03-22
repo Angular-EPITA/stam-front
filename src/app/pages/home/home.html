@@ -7,6 +7,36 @@
 <section class="mx-auto max-w-6xl px-4 pb-12">
   <h2 class="mb-6 text-xl font-semibold text-slate-100">Derniers jeux ajoutés</h2>
 
+  <!-- Filtres et Recherche -->
+  <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-lg bg-slate-800 p-4">
+    <div class="flex-1 w-full sm:max-w-xs">
+      <input #searchInput type="text" placeholder="Rechercher un jeu..."
+        class="w-full rounded-md bg-slate-700 px-4 py-2 text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        [value]="currentSearch" (input)="onFilterChange('search', searchInput.value)" />
+    </div>
+
+    <div class="flex gap-4">
+      <select #genreSelect
+        class="rounded-md bg-slate-700 px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        [value]="currentGenre" (change)="onFilterChange('genre', genreSelect.value)">
+        <option value="">Tous les genres</option>
+        <option value="RPG">RPG</option>
+        <option value="Action">Action</option>
+        <option value="Aventure">Aventure</option>
+        <option value="Stratégie">Stratégie</option>
+      </select>
+
+      <select #yearSelect
+        class="rounded-md bg-slate-700 px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        [value]="currentYear" (change)="onFilterChange('year', yearSelect.value)">
+        <option value="">Toutes les années</option>
+        <option value="2024">2024</option>
+        <option value="2023">2023</option>
+        <option value="2022">2022</option>
+      </select>
+    </div>
+  </div>
+
   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
     <!-- Boucle sur chaque jeu pour créer une carte -->
     @for (game of games; track game.id) {
