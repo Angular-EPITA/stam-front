@@ -1,0 +1,152 @@
+<section class="mx-auto max-w-6xl px-4 py-12">
+  <!-- Header -->
+  <div class="mb-8 flex items-center justify-between">
+    <h1 class="text-3xl font-bold tracking-tight text-slate-100">⚙️ Administration</h1>
+    <a routerLink="/" class="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-700 hover:text-slate-100">
+      ← Retour à l'accueil
+    </a>
+  </div>
+
+  <!-- Message de succès -->
+  @if (successMessage) {
+  <div class="mb-6 rounded-lg bg-green-600/20 px-4 py-3 text-sm font-medium text-green-400">
+    ✅ {{ successMessage }}
+  </div>
+  }
+
+  <!-- Chargement -->
+  @if (loading) {
+  <div class="flex min-h-[40vh] items-center justify-center">
+    <div class="h-12 w-12 animate-spin rounded-full border-4 border-slate-600 border-t-blue-500"></div>
+  </div>
+  } @else {
+
+  <!-- Tableau desktop -->
+  <div class="hidden overflow-hidden rounded-lg bg-slate-800 md:block">
+    <table class="w-full text-left text-sm">
+      <thead class="border-b border-slate-700 text-xs uppercase text-slate-400">
+        <tr>
+          <th class="px-6 py-4">Titre</th>
+          <th class="px-6 py-4">Genre</th>
+          <th class="px-6 py-4">Année</th>
+          <th class="px-6 py-4">Prix</th>
+          <th class="px-6 py-4 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (game of games; track game.id) {
+        <tr class="border-b border-slate-700/50 transition hover:bg-slate-700/30">
+          <td class="px-6 py-4 font-medium text-slate-100">{{ game.title }}</td>
+          <td class="px-6 py-4 text-slate-300">{{ game.genre }}</td>
+          <td class="px-6 py-4 text-slate-300">{{ game.year }}</td>
+          <td class="px-6 py-4 text-slate-300">{{ game.price }} €</td>
+          <td class="px-6 py-4 text-right">
+            <div class="flex items-center justify-end gap-2">
+              <button (click)="startEdit(game)"
+                class="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700">
+                ✏️ Éditer
+              </button>
+              <button (click)="deleteGame(game)"
+                class="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-red-700">
+                🗑️ Supprimer
+              </button>
+            </div>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Cards mobile -->
+  <div class="flex flex-col gap-4 md:hidden">
+    @for (game of games; track game.id) {
+    <div class="rounded-lg bg-slate-800 p-4">
+      <h3 class="mb-1 text-base font-semibold text-slate-100">{{ game.title }}</h3>
+      <div class="mb-3 flex flex-wrap gap-2 text-xs text-slate-400">
+        <span>{{ game.genre }}</span>
+        <span>•</span>
+        <span>{{ game.year }}</span>
+        <span>•</span>
+        <span class="text-slate-200">{{ game.price }} €</span>
+      </div>
+      <div class="flex gap-2">
+        <button (click)="startEdit(game)"
+          class="flex-1 rounded-md bg-blue-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-blue-700">
+          ✏️ Éditer
+        </button>
+        <button (click)="deleteGame(game)"
+          class="flex-1 rounded-md bg-red-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-red-700">
+          🗑️ Supprimer
+        </button>
+      </div>
+    </div>
+    }
+  </div>
+
+  <!-- Liste vide -->
+  @if (games.length === 0) {
+  <p class="py-12 text-center text-slate-400">Aucun jeu trouvé.</p>
+  }
+
+  }
+</section>
+
+<!-- Modale d'édition -->
+@if (editingGameId) {
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+  <div class="w-full max-w-lg rounded-xl bg-slate-800 p-6 shadow-2xl">
+    <h2 class="mb-6 text-xl font-bold text-slate-100">Éditer le jeu</h2>
+
+    <form (ngSubmit)="submitEdit()" class="flex flex-col gap-4">
+      <div>
+        <label class="mb-1 block text-sm font-medium text-slate-300">Titre</label>
+        <input type="text" [(ngModel)]="editForm.title" name="title" required
+          class="w-full rounded-md bg-slate-700 px-4 py-2 text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-medium text-slate-300">Description</label>
+        <textarea [(ngModel)]="editForm.description" name="description" rows="3" required
+          class="w-full rounded-md bg-slate-700 px-4 py-2 text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="mb-1 block text-sm font-medium text-slate-300">Prix (€)</label>
+          <input type="number" [(ngModel)]="editForm.price" name="price" step="0.01" required
+            class="w-full rounded-md bg-slate-700 px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-slate-300">Genre ID</label>
+          <input type="number" [(ngModel)]="editForm.genreId" name="genreId" required
+            class="w-full rounded-md bg-slate-700 px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-medium text-slate-300">Date de sortie</label>
+        <input type="date" [(ngModel)]="editForm.releaseDate" name="releaseDate" required
+          class="w-full rounded-md bg-slate-700 px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-medium text-slate-300">URL de l'image</label>
+        <input type="url" [(ngModel)]="editForm.imageUrl" name="imageUrl" required
+          class="w-full rounded-md bg-slate-700 px-4 py-2 text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+
+      <div class="mt-2 flex gap-3">
+        <button type="submit" [disabled]="editSubmitting"
+          class="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50">
+          {{ editSubmitting ? 'Enregistrement...' : 'Enregistrer' }}
+        </button>
+        <button type="button" (click)="cancelEdit()"
+          class="flex-1 rounded-lg bg-slate-700 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-slate-600">
+          Annuler
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+}
