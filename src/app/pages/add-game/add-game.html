@@ -37,12 +37,9 @@
         <label class="mb-2 block text-sm font-medium text-slate-300" for="genreId">Genre</label>
         <select id="genreId" name="genreId" [(ngModel)]="game.genreId" required
           class="w-full rounded-md bg-slate-700 px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option [ngValue]="1">RPG</option>
-          <option [ngValue]="2">Action</option>
-          <option [ngValue]="3">Aventure</option>
-          <option [ngValue]="4">Stratégie</option>
-          <option [ngValue]="5">Sport</option>
-          <option [ngValue]="6">Simulation</option>
+          @for (g of genres; track g.id) {
+            <option [ngValue]="g.id">{{ g.name }}</option>
+          }
         </select>
       </div>
 
