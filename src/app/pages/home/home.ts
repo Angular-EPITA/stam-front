@@ -1,11 +1,14 @@
 // Page d'accueil — onglets: derniers jeux ajoutés + recherche filtrée
 import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterModule } from '@angular/router';
 import { Game } from '../../models/game.interface';
 import { GameService } from '../../services/game.service';
 
 @Component({
     selector: 'app-home',
+    standalone: true,
+    imports: [RouterModule],
     templateUrl: './home.html',
     styleUrl: './home.scss',
 })

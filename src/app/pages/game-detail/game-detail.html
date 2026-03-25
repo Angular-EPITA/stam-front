@@ -1,0 +1,61 @@
+<!-- État : chargement -->
+@if (loading) {
+<div class="flex min-h-[60vh] items-center justify-center">
+  <div class="h-12 w-12 animate-spin rounded-full border-4 border-slate-600 border-t-blue-500"></div>
+</div>
+}
+
+<!-- État : erreur -->
+@else if (error) {
+<section class="mx-auto max-w-2xl px-4 py-20 text-center">
+  <h1 class="mb-4 text-3xl font-bold text-slate-100">😕 Jeu introuvable</h1>
+  <p class="mb-8 text-slate-400">Le jeu que vous cherchez n'existe pas ou a été supprimé.</p>
+  <button
+    (click)="goBack()"
+    class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-blue-700">
+    ← Retour à l'accueil
+  </button>
+</section>
+}
+
+<!-- État : jeu chargé -->
+@else if (game) {
+<section class="mx-auto max-w-5xl px-4 py-12">
+  <!-- Bouton retour -->
+  <button
+    (click)="goBack()"
+    class="mb-8 inline-flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-700 hover:text-slate-100">
+    ← Retour
+  </button>
+
+  <!-- Contenu principal : image + infos -->
+  <div class="flex flex-col gap-8 md:flex-row">
+    <!-- Image -->
+    <div class="w-full flex-shrink-0 md:w-2/5">
+      <img
+        class="w-full rounded-xl object-cover shadow-lg"
+        [src]="game.imageUrl"
+        [alt]="game.title" />
+    </div>
+
+    <!-- Informations -->
+    <div class="flex flex-1 flex-col gap-4">
+      <h1 class="text-3xl font-bold tracking-tight text-slate-100">{{ game.title }}</h1>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="inline-flex items-center rounded-md bg-slate-700 px-3 py-1 text-sm font-medium text-slate-200">
+          {{ game.genre }}
+        </span>
+        <span class="text-sm text-slate-400">{{ game.year }}</span>
+      </div>
+
+      <p class="text-2xl font-semibold text-blue-400">{{ game.price }} €</p>
+
+      <div class="mt-2">
+        <h2 class="mb-2 text-lg font-semibold text-slate-200">Description</h2>
+        <p class="leading-relaxed text-slate-300">{{ game.description }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+}

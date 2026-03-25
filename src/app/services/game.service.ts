@@ -92,6 +92,12 @@ export class GameService {
         };
     }
 
+    getGameById(id: string): Observable<Game> {
+        return this.http
+            .get<GameApi>(`${this.baseUrl}/games/${id}`)
+            .pipe(map((g) => this.mapGameApiToGame(g)));
+    }
+
     addGame(game: { title: string, description: string, price: number, releaseDate: string, imageUrl: string, genreId: number }): Observable<GameApi> {
         return this.http.post<GameApi>(`${this.baseUrl}/games`, game);
     }
