@@ -1,106 +1,91 @@
-import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Game } from '../../models/game.interface';
+import { AdminService } from '../../services/admin.service';
 import { GameService } from '../../services/game.service';
 
 @Component({
     selector: 'app-admin',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterModule],
+    imports: [CommonModule, RouterModule],
     templateUrl: './admin.html',
-    styleUrl: './admin.scss',
 })
 export class AdminComponent implements OnInit {
+    private readonly adminService = inject(AdminService);
     private readonly gameService = inject(GameService);
+    private readonly destroyRef = inject(DestroyRef);
 
+    code = '';
+    loginError: string | null = null;
+
+    page = 0;
+    totalPages = 1;
     games: Game[] = [];
-    loading = true;
-    successMessage = '';
-
-    // Édition
-    editingGameId: string | null = null;
-    editForm = {
-        title: '',
-        description: '',
-        price: 0,
-        releaseDate: '',
-        imageUrl: '',
-        genreId: 1,
-    };
-    editSubmitting = false;
 
     ngOnInit(): void {
-        this.loadGames();
+        if (this.isAdmin()) {
+            this.loadPage(0);
+        }
     }
 
-    loadGames(): void {
-        this.loading = true;
-        this.gameService.getAllGames().subscribe({
-            next: (games) => {
-                this.games = games;
-                this.loading = false;
-            },
-            error: (err) => {
-                console.error('Erreur lors du chargement des jeux', err);
-                this.loading = false;
-            },
-        });
+    isAdmin(): boolean {
+        return this.adminService.isAdmin();
+    }
+
+    login(): void {
+        this.loginError = null;
+        const ok = this.adminService.login(this.code);
+        if (!ok) {
+            this.loginError = 'Code admin incorrect.';
+            return;
+        }
+        this.code = '';
+        this.loadPage(0);
+    }
+
+    logout(): void {
+        this.adminService.logout();
+        this.games = [];
+        this.page = 0;
+        this.totalPages = 1;
+    }
+
+    loadPage(page: number): void {
+        this.gameService
+            .getGamesPaged(page, 12)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (res) => {
+                    this.page = res.page;
+                    this.totalPages = res.totalPages;
+                    this.games = res.items;
+                },
+                error: (err) => console.error('Erreur chargement admin', err),
+            });
+    }
+
+    prevPage(): void {
+        if (this.page <= 0) return;
+        this.loadPage(this.page - 1);
+    }
+
+    nextPage(): void {
+        if (this.page >= this.totalPages - 1) return;
+        this.loadPage(this.page + 1);
     }
 
     deleteGame(game: Game): void {
-        const confirmed = confirm(`Voulez-vous vraiment supprimer "${game.title}" ?`);
-        if (!confirmed) return;
+        const ok = confirm(`Supprimer "${game.title}" ?`);
+        if (!ok) return;
 
-        this.gameService.deleteGame(game.id).subscribe({
-            next: () => {
-                this.games = this.games.filter((g) => g.id !== game.id);
-                this.showSuccess(`"${game.title}" a été supprimé.`);
-            },
-            error: (err) => console.error('Erreur lors de la suppression', err),
-        });
-    }
-
-    startEdit(game: Game): void {
-        this.editingGameId = game.id;
-        this.editForm = {
-            title: game.title,
-            description: game.description,
-            price: game.price,
-            releaseDate: game.releaseDate,
-            imageUrl: game.imageUrl,
-            genreId: 1,
-        };
-    }
-
-    cancelEdit(): void {
-        this.editingGameId = null;
-    }
-
-    submitEdit(): void {
-        if (!this.editingGameId) return;
-        this.editSubmitting = true;
-
-        this.gameService.updateGame(this.editingGameId, this.editForm).subscribe({
-            next: (updatedGame) => {
-                const index = this.games.findIndex((g) => g.id === this.editingGameId);
-                if (index !== -1) {
-                    this.games[index] = updatedGame;
-                }
-                this.showSuccess(`"${updatedGame.title}" a été mis à jour.`);
-                this.editingGameId = null;
-                this.editSubmitting = false;
-            },
-            error: (err) => {
-                console.error('Erreur lors de la mise à jour', err);
-                this.editSubmitting = false;
-            },
-        });
-    }
-
-    private showSuccess(message: string): void {
-        this.successMessage = message;
-        setTimeout(() => (this.successMessage = ''), 3000);
+        this.gameService
+            .deleteGame(game.id)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => this.loadPage(this.page),
+                error: () => alert('Suppression impossible.'),
+            });
     }
 }
