@@ -1,0 +1,54 @@
+name: Angular CI
+
+on:
+  push:
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  ci-stam-front:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    
+    - name: Install
+      run: npm ci
+      
+    - name: Lint
+      run: npm run lint
+      
+    - name: Build
+      run: npm run build
+
+    - name: Sauvegarder l'application compilée (Artéfact)
+      uses: actions/upload-artifact@v4
+      with:
+        name: stam-front
+        path: dist/stam-front/
+        retention-days: 30
+        
+    - name: Login to GitHub Container Registry (GHCR)
+      uses: docker/login-action@v3
+      # On ne pousse l'image que si on est sur main ou develop
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+      with:
+        context: .
+        push: true
+        tags: |
+          ghcr.io/angular-epita/stam-front:latest
+          ghcr.io/angular-epita/stam-front:${{ github.sha }}
