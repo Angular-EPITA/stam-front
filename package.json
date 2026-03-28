@@ -1,6 +1,6 @@
 {
   "name": "stam-front",
-  "version": "0.0.128",
+  "version": "0.0.129",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
