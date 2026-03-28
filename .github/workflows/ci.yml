@@ -9,12 +9,11 @@ on:
 jobs:
   build-and-release:
     runs-on: ubuntu-24.04
+    env:
+      CI_REGISTRY_IMAGE: ghcr.io/angular-epita/stam-front
     permissions:
       contents: write
       packages: write
-    
-    env:
-      CI_REGISTRY_IMAGE: ghcr.io/angular-epita/stam-front
 
     steps:
       # --- 1. AUTHENTIFICATION MAGIQUE (Bypass du Ruleset) ---
