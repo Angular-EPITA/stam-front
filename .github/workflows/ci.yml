@@ -1,4 +1,4 @@
-name: Angular CI
+name: Angular CI & Auto-Release
 
 on:
   push:
@@ -9,102 +9,82 @@ on:
 jobs:
   ci-stam-front:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      packages: write
+    
     env:
       CI_REGISTRY_IMAGE: ghcr.io/angular-epita/stam-front
-    permissions:
-      contents: read
-      packages: write
+
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install
-        run: npm ci
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Build
-        run: npm run build
-
-      - name: Sauvegarder l'application compilée (Artéfact)
-        uses: actions/upload-artifact@v4
-        with:
-          name: stam-front
-          path: dist/stam-front/
-          retention-days: 30
-
-      - name: Login to GitHub Container Registry (GHCR)
-        uses: docker/login-action@v3
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build + push Docker image (develop)
-        if: github.ref == 'refs/heads/develop'
-        run: |
-          docker build -t $CI_REGISTRY_IMAGE:latest -t $CI_REGISTRY_IMAGE:$GITHUB_SHA .
-          docker push $CI_REGISTRY_IMAGE:latest
-          docker push $CI_REGISTRY_IMAGE:$GITHUB_SHA
-
-      - name: Build + push Docker image (main + version)
-        if: github.ref == 'refs/heads/main'
-        run: |
-          export VERSION=$(node -p "require('./package.json').version")
-          export CONTAINER_RELEASE_IMAGE=$CI_REGISTRY_IMAGE:$VERSION
-          docker build -t $CONTAINER_RELEASE_IMAGE -t $CI_REGISTRY_IMAGE:latest -t $CI_REGISTRY_IMAGE:$GITHUB_SHA .
-          docker push $CI_REGISTRY_IMAGE:latest
-          docker push $CONTAINER_RELEASE_IMAGE
-          docker push $CI_REGISTRY_IMAGE:$GITHUB_SHA
-
-  release:
-    needs: ci-stam-front
-    runs-on: ubuntu-24.04
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor != 'github-actions[bot]'
-    permissions:
-      contents: read
-    concurrency:
-      group: release-main
-      cancel-in-progress: false
-    steps:
-      - name: Generate GitHub App token
+      - name: Générer le token de la GitHub App
         id: app-token
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
-      - name: Checkout with GitHub App token
+      - name: Checkout du code
         uses: actions/checkout@v4
         with:
-          token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
-          persist-credentials: false
+          # Si on est sur main, on utilise le super-token pour avoir le droit d'écrire
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
 
-      - name: Configure git
-        run: |
-          git config user.name "${{ steps.app-token.outputs.app-slug }}[bot]"
-          git config user.email "${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${{ github.repository }}.git
-
-      - uses: actions/setup-node@v4
+      # --- 2. SETUP & VÉRIFICATIONS ---
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install, Lint & Build
+        run: |
+          npm ci
+          npm run lint
+          npm run build
 
-      - name: Release
+      - name: Login to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # --- 3. DOCKER SUR DEVELOP (Pas de versioning) ---
+      - name: Push Docker (Develop)
+        if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+        run: |
+          docker build -t $CI_REGISTRY_IMAGE:develop -t $CI_REGISTRY_IMAGE:${{ github.sha }} .
+          docker push $CI_REGISTRY_IMAGE:develop
+          docker push $CI_REGISTRY_IMAGE:${{ github.sha }}
+
+      # --- 4. AUTO-RELEASE SUR MAIN (Bypass Ruleset) ---
+      - name: Configurer Git pour Release Bot
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          git config user.name "${{ steps.app-token.outputs.app-slug }}[bot]"
+          git config user.email "${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
+
+      - name: Lancer npm run release (Bump version + Tag)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: npm run release
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # --- 5. DOCKER SUR MAIN (Avec la nouvelle version !) ---
+      - name: Push Docker (Main / Prod)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          # On lit la TOUTE NOUVELLE version générée par l'étape précédente dans le package.json
+          VERSION=$(node -p "require('./package.json').version")
+          echo "Nouvelle version lue : $VERSION"
           
+          docker build -t $CI_REGISTRY_IMAGE:latest -t $CI_REGISTRY_IMAGE:v$VERSION -t $CI_REGISTRY_IMAGE:${{ github.sha }} .
+          docker push $CI_REGISTRY_IMAGE:latest
+          docker push $CI_REGISTRY_IMAGE:v$VERSION
+          docker push $CI_REGISTRY_IMAGE:${{ github.sha }}
