@@ -3,9 +3,7 @@ name: Angular CI & Auto-Release
 on:
   push:
     branches: ["main", "develop"]
-    branches: ["main", "develop"]
   pull_request:
-    branches: ["main", "develop"]
     branches: ["main", "develop"]
 
 jobs:
@@ -16,9 +14,6 @@ jobs:
     permissions:
       contents: write
       packages: write
-    
-    env:
-      CI_REGISTRY_IMAGE: ghcr.io/angular-epita/stam-front
 
     steps:
       # --- 1. AUTHENTIFICATION MAGIQUE (Bypass du Ruleset) ---
