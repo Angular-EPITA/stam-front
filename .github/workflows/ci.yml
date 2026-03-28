@@ -3,12 +3,16 @@ name: Angular CI & Auto-Release
 on:
   push:
     branches: ["main", "develop"]
+    branches: ["main", "develop"]
   pull_request:
+    branches: ["main", "develop"]
     branches: ["main", "develop"]
 
 jobs:
   build-and-release:
     runs-on: ubuntu-24.04
+    env:
+      CI_REGISTRY_IMAGE: ghcr.io/angular-epita/stam-front
     permissions:
       contents: write
       packages: write
