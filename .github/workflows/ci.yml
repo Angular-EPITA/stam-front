@@ -2,40 +2,26 @@ name: Angular CI & Auto-Release
 
 on:
   push:
-    branches: ["main", "develop"]
+    branches: ["main", "develop", "feature/**", "feat/**", "fix/**", "hotfix/**"]
   pull_request:
     branches: ["main", "develop"]
 
 jobs:
-  build-and-release:
+  # ============================================================
+  # JOB 1 — CI (Intégration Continue)
+  # S'exécute sur TOUTES les branches (feature, develop, main)
+  # ============================================================
+  ci:
+    name: "CI — Lint, Build & Test"
     runs-on: ubuntu-24.04
     if: "!startsWith(github.event.head_commit.message, 'chore(release)')"
-    env:
-      CI_REGISTRY_IMAGE: ghcr.io/angular-epita/stam-front
     permissions:
-      contents: write
-      packages: write
+      contents: read
 
     steps:
-      # --- 1. AUTHENTIFICATION MAGIQUE (Bypass du Ruleset) ---
-      - name: Générer le token de la GitHub App
-        id: app-token
-        # On ne le fait que sur un push main pour bypasser le ruleset de Prod
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: actions/create-github-app-token@v3
-        with:
-          app-id: ${{ secrets.RELEASE_APP_ID }}
-          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-
       - name: Checkout du code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          # Si le token magique existe (sur main), on l'utilise. Sinon, token normal.
-          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
 
-      # --- 2. CONFIGURATION & BUILD ---
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -51,41 +37,84 @@ jobs:
       - name: Unit Tests
         run: npx ng test --watch=false --browsers=ChromeHeadless
 
+  # ============================================================
+  # JOB 2 — CD (Déploiement Continu)
+  # S'exécute UNIQUEMENT sur les branches longues (develop, main)
+  # après succès du job CI
+  # ============================================================
+  cd:
+    name: "CD — Docker & Release"
+    needs: ci
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    env:
+      CI_REGISTRY_IMAGE: ghcr.io/angular-epita/stam-front
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Générer le token de la GitHub App
+        id: app-token
+        if: github.ref == 'refs/heads/main'
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Checkout du code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install & Build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Unit Tests
+        run: npx ng test --watch=false --browsers=ChromeHeadless
+
       - name: Login to GHCR
-        if: github.event_name == 'push'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # --- 3. DOCKER SUR DEVELOP ---
+      # --- DOCKER SUR DEVELOP ---
       - name: Push Docker (Develop)
-        if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/develop'
         run: |
           docker build -t $CI_REGISTRY_IMAGE:develop -t $CI_REGISTRY_IMAGE:${{ github.sha }} .
           docker push $CI_REGISTRY_IMAGE:develop
           docker push $CI_REGISTRY_IMAGE:${{ github.sha }}
 
-      # --- 4. AUTO-RELEASE SUR MAIN (release-it) ---
+      # --- AUTO-RELEASE SUR MAIN (release-it) ---
       - name: Configurer Git pour le Bot
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Lancer release-it
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main'
         run: npm run release
         env:
-          # release-it a besoin de ce token pour créer la page de Release GitHub
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }} 
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
 
-      # --- 5. DOCKER SUR MAIN (Avec la NOUVELLE version) ---
+      # --- DOCKER SUR MAIN (Avec la NOUVELLE version) ---
       - name: Push Docker (Main / Prod)
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main'
         run: |
-          # On lit la nouvelle version écrite par release-it dans le package.json
           VERSION=$(node -p "require('./package.json').version")
           echo "Nouvelle version pour Docker : $VERSION"
           
