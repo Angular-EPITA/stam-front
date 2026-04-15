@@ -48,6 +48,9 @@ jobs:
           npm run lint
           npm run build
 
+      - name: Unit Tests
+        run: npx ng test --watch=false --browsers=ChromeHeadless
+
       - name: Login to GHCR
         if: github.event_name == 'push'
         uses: docker/login-action@v3
