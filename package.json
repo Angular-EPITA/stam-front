@@ -1,6 +1,6 @@
 {
   "name": "stam-front",
-  "version": "0.0.202",
+  "version": "20.3.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -58,7 +58,8 @@
   },
   "release-it": {
     "git": {
-      "commitMessage": "chore(release): v${version} [skip ci]"
+      "commitMessage": "chore(release): v${version} [skip ci]",
+      "tagName": "v${version}"
     },
     "github": {
       "release": true,
@@ -66,6 +67,9 @@
     },
     "npm": {
       "publish": false
+    },
+    "hooks": {
+      "before:bump": "echo \"Release : v${latestVersion} → v${version}\""
     }
   }
 }

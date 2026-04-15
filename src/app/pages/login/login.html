@@ -1,0 +1,38 @@
+<section class="flex min-h-screen items-center justify-center px-4">
+  <div class="w-full max-w-sm rounded-lg bg-slate-800 p-8">
+    <h1 class="mb-6 text-center text-2xl font-bold text-slate-100">Connexion</h1>
+
+    @if (error) {
+      <div class="mb-4 rounded-md bg-red-900/50 p-3 text-sm text-red-300">{{ error }}</div>
+    }
+
+    <form (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
+      <div>
+        <label for="username" class="mb-1 block text-sm font-medium text-slate-300">Nom d'utilisateur</label>
+        <input id="username" type="text" [(ngModel)]="username" name="username" required autocomplete="username"
+          class="w-full rounded-md bg-slate-700 px-4 py-2 text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="admin" />
+      </div>
+
+      <div>
+        <label for="password" class="mb-1 block text-sm font-medium text-slate-300">Mot de passe</label>
+        <input id="password" type="password" [(ngModel)]="password" name="password" required autocomplete="current-password"
+          class="w-full rounded-md bg-slate-700 px-4 py-2 text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="••••••••" />
+      </div>
+
+      <button type="submit" [disabled]="isLoading || !username || !password"
+        class="mt-2 rounded-md bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50">
+        @if (isLoading) {
+          Connexion...
+        } @else {
+          Se connecter
+        }
+      </button>
+    </form>
+
+    <div class="mt-6 text-center">
+      <a routerLink="/" class="text-sm text-slate-400 hover:text-slate-200">← Retour à l'accueil</a>
+    </div>
+  </div>
+</section>

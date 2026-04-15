@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { GameService } from '../../services/game.service';
-import { AdminService } from '../../services/admin.service';
 import { Genre } from '../../models/genre.interface';
 
 @Component({
@@ -15,7 +14,6 @@ import { Genre } from '../../models/genre.interface';
 export class AddGameComponent {
   private gameService = inject(GameService);
   private router = inject(Router);
-  private adminService = inject(AdminService);
 
   genres: Genre[] = [];
 
@@ -31,10 +29,6 @@ export class AddGameComponent {
   isSubmitting = false;
 
   constructor() {
-    if (!this.adminService.isAdmin()) {
-      this.router.navigate(['/admin']);
-      return;
-    }
     this.gameService.getGenres().subscribe({
       next: (genres) => {
         this.genres = genres;

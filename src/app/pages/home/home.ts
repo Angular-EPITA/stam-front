@@ -6,6 +6,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Game } from '../../models/game.interface';
 import { Genre } from '../../models/genre.interface';
 import { GameService } from '../../services/game.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
     selector: 'app-home',
@@ -16,6 +17,7 @@ import { GameService } from '../../services/game.service';
 })
 export class HomeComponent implements OnInit {
     private readonly gameService = inject(GameService);
+    protected readonly authService = inject(AuthService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
