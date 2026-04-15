@@ -3,7 +3,7 @@ import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Game } from '../../models/game.interface';
-import { AdminService } from '../../services/admin.service';
+import { AuthService } from '../../services/auth.service';
 import { GameService } from '../../services/game.service';
 
 @Component({
@@ -13,43 +13,20 @@ import { GameService } from '../../services/game.service';
     templateUrl: './admin.html',
 })
 export class AdminComponent implements OnInit {
-    private readonly adminService = inject(AdminService);
+    private readonly authService = inject(AuthService);
     private readonly gameService = inject(GameService);
     private readonly destroyRef = inject(DestroyRef);
-
-    code = '';
-    loginError: string | null = null;
 
     page = 0;
     totalPages = 1;
     games: Game[] = [];
 
     ngOnInit(): void {
-        if (this.isAdmin()) {
-            this.loadPage(0);
-        }
-    }
-
-    isAdmin(): boolean {
-        return this.adminService.isAdmin();
-    }
-
-    login(): void {
-        this.loginError = null;
-        const ok = this.adminService.login(this.code);
-        if (!ok) {
-            this.loginError = 'Code admin incorrect.';
-            return;
-        }
-        this.code = '';
         this.loadPage(0);
     }
 
     logout(): void {
-        this.adminService.logout();
-        this.games = [];
-        this.page = 0;
-        this.totalPages = 1;
+        this.authService.logout();
     }
 
     loadPage(page: number): void {

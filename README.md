@@ -1,59 +1,42 @@
-# StamFront
+# stam-front
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.10.
+Frontend Angular (v20) de la plateforme STAM — catalogue de jeux vidéo.
 
-## Development server
+## Pré-requis
 
-To start a local development server, run:
+- Node.js 20+
+- npm
 
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Démarrage rapide (développement local)
 
 ```bash
-ng generate component component-name
+npm install
+npm run start:local
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Frontend : http://localhost:4200 (proxy automatique vers l'API sur `localhost:8080`)
+
+## Build de production
 
 ```bash
-ng generate --help
+npx ng build --configuration production
 ```
 
-## Building
+Les fichiers sont générés dans `dist/stam-front/browser/`.
 
-To build the project run:
+## Stack technique
 
-```bash
-ng build
-```
+| Composant | Version |
+| :--- | :--- |
+| Angular | 20.3 |
+| TypeScript | 5.9 |
+| Tailwind CSS | 3.4 |
+| RxJS | 7.8 |
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Architecture
 
-## Running unit tests
+- **Standalone components** avec le nouveau control flow Angular (`@if`, `@for`)
+- **JWT Authentication** : `AuthService` + `HttpInterceptor` avec refresh automatique sur 401
+- **Route guards** : `authGuard` protège les routes `/admin/**`
+- **Proxy** : `proxy.local.conf.json` → API locale, `proxy.conf.json` → API Docker
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.

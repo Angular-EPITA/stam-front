@@ -5,7 +5,6 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Genre } from '../../models/genre.interface';
 import { GameService } from '../../services/game.service';
-import { AdminService } from '../../services/admin.service';
 
 @Component({
     selector: 'app-edit-game',
@@ -17,7 +16,6 @@ export class EditGameComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly gameService = inject(GameService);
-    private readonly adminService = inject(AdminService);
     private readonly destroyRef = inject(DestroyRef);
 
     id: string | null = null;
@@ -38,11 +36,6 @@ export class EditGameComponent implements OnInit {
     error: string | null = null;
 
     ngOnInit(): void {
-        if (!this.adminService.isAdmin()) {
-            this.router.navigate(['/admin']);
-            this.isLoading = false;
-            return;
-        }
         this.id = this.route.snapshot.paramMap.get('id');
         if (!this.id) {
             this.error = 'ID manquant.';

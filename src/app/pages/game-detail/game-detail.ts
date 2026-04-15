@@ -3,7 +3,7 @@ import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Game } from '../../models/game.interface';
-import { AdminService } from '../../services/admin.service';
+import { AuthService } from '../../services/auth.service';
 import { GameService } from '../../services/game.service';
 
 @Component({
@@ -16,7 +16,7 @@ export class GameDetailComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly gameService = inject(GameService);
-    private readonly adminService = inject(AdminService);
+    private readonly authService = inject(AuthService);
     private readonly destroyRef = inject(DestroyRef);
 
     isLoading = true;
@@ -24,7 +24,7 @@ export class GameDetailComponent implements OnInit {
     game: Game | null = null;
 
     isAdmin(): boolean {
-        return this.adminService.isAdmin();
+        return this.authService.isLoggedIn;
     }
 
     ngOnInit(): void {
