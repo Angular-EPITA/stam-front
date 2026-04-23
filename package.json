@@ -10,7 +10,13 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint",
-    "release": "release-it --ci"
+    "release": "release-it --ci",
+    "otel:up": "docker compose up -d",
+    "otel:down": "docker compose down",
+    "otel:logs": "docker compose logs -f otel-collector",
+    "otel:status": "docker compose ps",
+    "otel:clean": "docker compose down -v",
+    "monitor": "npm run otel:up && sleep 5 && npm run start:local"
   },
   "prettier": {
     "printWidth": 100,
@@ -26,6 +32,15 @@
   },
   "private": true,
   "dependencies": {
+    "@opentelemetry/api": "^1.8.0",
+    "@opentelemetry/sdk-trace-web": "^1.26.0",
+    "@opentelemetry/sdk-trace-base": "^1.26.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.52.0",
+    "@opentelemetry/resources": "^1.26.0",
+    "@opentelemetry/semantic-conventions": "^1.26.0",
+    "@opentelemetry/instrumentation": "^0.52.0",
+    "@opentelemetry/instrumentation-fetch": "^0.52.0",
+    "@opentelemetry/instrumentation-xml-http-request": "^0.52.0",
     "@angular/common": "^20.3.0",
     "@angular/compiler": "^20.3.0",
     "@angular/core": "^20.3.0",

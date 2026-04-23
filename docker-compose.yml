@@ -1,0 +1,104 @@
+services:
+  # OpenTelemetry Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.102.0
+    command: ['--config=/etc/otel-collector-config.yaml']
+    ports:
+      # OTLP gRPC receiver
+      - '4317:4317'
+      # OTLP HTTP receiver
+      - '4318:4318'
+      # Health check port
+      - '13133:13133'
+      # Metrics port
+      - '8888:8888'
+      # Prometheus port
+      - '8889:8889'
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - ./otel-collector-logs:/var/log/otel
+    networks:
+      - observability
+    environment:
+      - GOGC=80
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:13133']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Prometheus for metrics storage
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - '9091:9090'
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-storage:/prometheus
+    networks:
+      - observability
+
+  # Loki for logs storage
+  loki:
+    image: grafana/loki:2.9.0
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - '3101:3100'
+    volumes:
+      - ./loki-config.yaml:/etc/loki/local-config.yaml
+      - loki-storage:/loki
+    networks:
+      - observability
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - '3001:3000'
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - observability
+
+  # Tempo for distributed tracing
+  # tempo:
+  #   image: grafana/tempo:latest
+  #   ports:
+  #     - '3201:3200'
+  #     - '4319:4317'
+  #   volumes:
+  #     - tempo-storage:/var/tempo
+  #   networks:
+  #     - observability
+
+  tempo:
+    image: grafana/tempo:latest
+    command: ['-config.file=/etc/tempo.yaml']   # ← ajout
+    ports:
+      - '3201:3200'
+      - '4319:4317'
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml             # ← ajout
+      - tempo-storage:/var/tempo
+    networks:
+      - observability
+
+volumes:
+  prometheus-storage:
+  grafana-storage:
+  loki-storage:
+  tempo-storage:
+
+networks:
+  observability:
+    driver: bridge
