@@ -1,4 +1,4 @@
-import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpEvent, HttpErrorResponse } from '@angular/common/http';
+import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpEvent, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { OtelService } from '../observability/otel.service';
 import { tap } from 'rxjs';
@@ -37,8 +37,8 @@ export const otelInterceptor: HttpInterceptorFn = (
   return next(req).pipe(
     tap({
       next: (event: HttpEvent<unknown>) => {
-        // Log on response
-        if (event.status !== undefined) {
+        // Log on response (only HttpResponse has status)
+        if (event instanceof HttpResponse) {
           const duration = performance.now() - startTime;
 
           // Update span attributes
