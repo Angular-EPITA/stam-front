@@ -11,13 +11,13 @@ export class OtelService {
     debug: console.debug.bind(console),
   };
 
-  private logBuffer: Array<{
+  private logBuffer: {
     timestamp: number;
     level: 'info' | 'warn' | 'error' | 'debug';
     message: string;
     context?: string;
-    data?: any;
-  }> = [];
+    data?: Record<string, unknown>;
+  }[] = [];
 
   private flushTimer: number | null = null;
   private readonly flushIntervalMs = 5000;
@@ -101,7 +101,7 @@ export class OtelService {
     level: 'info' | 'warn' | 'error' | 'debug',
     message: string,
     context?: string,
-    data?: any
+    data?: Record<string, unknown>
   ): void {
     const logEntry = {
       timestamp: Date.now(),
@@ -119,8 +119,8 @@ export class OtelService {
     }
 
     // Also log to OpenTelemetry API if available
-    if (typeof window !== 'undefined' && (window as any).OTEL_LOGGER) {
-      const logger = (window as any).OTEL_LOGGER;
+    if (typeof window !== 'undefined' && (window as unknown as Record<string, unknown>).OTEL_LOGGER) {
+      const logger = (window as unknown as Record<string, Record<string, unknown>>).OTEL_LOGGER;
       logger.emit({
         severityNumber: this.getSeverityNumber(level),
         severityText: level.toUpperCase(),
@@ -224,28 +224,28 @@ export class OtelService {
   /**
    * Log info message
    */
-  public info(message: string, context?: string, data?: any): void {
+  public info(message: string, context?: string, data?: Record<string, unknown>): void {
     this.log('info', message, context, data);
   }
 
   /**
    * Log warning message
    */
-  public warn(message: string, context?: string, data?: any): void {
+  public warn(message: string, context?: string, data?: Record<string, unknown>): void {
     this.log('warn', message, context, data);
   }
 
   /**
    * Log error message
    */
-  public error(message: string, context?: string, data?: any): void {
+  public error(message: string, context?: string, data?: Record<string, unknown>): void {
     this.log('error', message, context, data);
   }
 
   /**
    * Log debug message
    */
-  public debug(message: string, context?: string, data?: any): void {
+  public debug(message: string, context?: string, data?: Record<string, unknown>): void {
     this.log('debug', message, context, data);
   }
 

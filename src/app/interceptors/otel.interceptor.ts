@@ -1,7 +1,8 @@
-import { HttpInterceptorFn, HttpRequest, HttpHandlerFn } from '@angular/common/http';
+import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { OtelService } from '../observability/otel.service';
 import { tap } from 'rxjs';
+import type { Tracer } from '@opentelemetry/api';
 
 /**
  * HTTP Interceptor for OpenTelemetry tracing
@@ -14,7 +15,7 @@ export const otelInterceptor: HttpInterceptorFn = (
   const otelService = inject(OtelService);
 
   // Get the global tracer if available
-  const tracer = (window as any).OTEL_TRACER;
+  const tracer = (window as unknown as { OTEL_TRACER?: Tracer }).OTEL_TRACER;
 
   // Create a span for this HTTP request
   const span = tracer?.startSpan(`HTTP ${req.method}`, {
@@ -35,7 +36,7 @@ export const otelInterceptor: HttpInterceptorFn = (
 
   return next(req).pipe(
     tap({
-      next: (event: any) => {
+      next: (event: HttpResponse<unknown>) => {
         // Log on response
         if (event.status !== undefined) {
           const duration = performance.now() - startTime;
@@ -59,7 +60,7 @@ export const otelInterceptor: HttpInterceptorFn = (
           );
         }
       },
-      error: (error: any) => {
+      error: (error: HttpErrorResponse) => {
         // Log errors
         const duration = performance.now() - startTime;
 

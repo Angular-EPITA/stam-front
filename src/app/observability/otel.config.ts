@@ -56,7 +56,7 @@ const initializeOpenTelemetry = (): void => {
           if (url) span.setAttribute('http.url', url);
           if (method) span.setAttribute('http.method', method);
 
-          const status = (result as any)?.status;
+          const status = (result as Record<string, unknown>)?.status;
           if (typeof status === 'number') {
             span.setAttribute('http.status_code', status);
           }
@@ -64,12 +64,12 @@ const initializeOpenTelemetry = (): void => {
       }),
       new XMLHttpRequestInstrumentation({
         applyCustomAttributesOnSpan: (span: Span, xhr: XMLHttpRequest) => {
-          const url = (xhr as any)?.responseURL;
+          const url = (xhr as unknown as Record<string, unknown>)?.responseURL;
           if (typeof url === 'string' && url.length > 0) {
             span.setAttribute('http.url', url);
           }
 
-          const status = (xhr as any)?.status;
+          const status = (xhr as unknown as Record<string, unknown>)?.status;
           if (typeof status === 'number') {
             span.setAttribute('http.status_code', status);
           }
@@ -80,8 +80,8 @@ const initializeOpenTelemetry = (): void => {
 
   // Make tracer globally available
   const tracer = provider.getTracer('stam-front-tracer');
-  (window as any).OTEL_TRACER = tracer;
-  (window as any).OTEL_PROVIDER = provider;
+  (window as unknown as Record<string, unknown>).OTEL_TRACER = tracer;
+  (window as unknown as Record<string, unknown>).OTEL_PROVIDER = provider;
 };
 
 /**

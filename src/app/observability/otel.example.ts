@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { OtelService } from '../observability/otel.service';
 
 /**
@@ -9,7 +9,9 @@ import { OtelService } from '../observability/otel.service';
   providedIn: 'root'
 })
 export class ObservabilityExampleService {
-  constructor(private otel: OtelService) {
+  private readonly otel = inject(OtelService);
+
+  constructor() {
     this.otel.info('ObservabilityExampleService initialized', 'ObservabilityExampleService');
   }
 
@@ -62,7 +64,7 @@ export class ObservabilityExampleService {
   exampleErrorHandling(): void {
     try {
       // Code that might fail
-      const result = (null as any).someProperty.value;
+      void (null as unknown as Record<string, Record<string, unknown>>).someProperty.value;
     } catch (error) {
       this.otel.error(
         `Error occurred: ${(error as Error).message}`,
@@ -130,7 +132,7 @@ export class ObservabilityExampleService {
   trackUserAction(
     actionType: 'click' | 'form_submit' | 'navigation',
     actionName: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): void {
     this.otel.info(
       `User action: ${actionName}`,
@@ -196,8 +198,8 @@ export class ObservabilityExampleService {
   trackStateChange(
     store: string,
     action: string,
-    oldState: any,
-    newState: any
+    oldState: Record<string, unknown>,
+    newState: Record<string, unknown>
   ): void {
     this.otel.debug(
       `State change in ${store}: ${action}`,
