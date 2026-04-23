@@ -1,0 +1,56 @@
+# OTEL and Observability
+otel-collector-logs/
+prometheus-storage/
+grafana-storage/
+loki-storage/
+
+# Environment files (unless you want to commit them)
+.env
+.env.local
+.env.*.local
+
+# Node modules
+node_modules/
+package-lock.json
+yarn.lock
+
+# Angular build output
+dist/
+out-tsc/
+.angular/
+*.ngfactory.ts
+*.ngstyle.ts
+
+# Compilation output
+*.js
+!*.config.js
+*.map
+*.metadata.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+coverage/
+.karma.conf.js
+*.lcov
+
+# Misc
+.env.prod
+.env.test
+npm-debug.log
+yarn-error.log
+*.log
+
+# Docker
+.dockerignore
+Dockerfile
+
+# OS
+.DS_Store
+Thumbs.db
