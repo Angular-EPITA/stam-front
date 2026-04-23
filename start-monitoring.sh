@@ -53,28 +53,21 @@ else
 fi
 
 # Check Grafana
-if curl -s http://localhost:3000 > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Grafana is running (http://localhost:3000)${NC}"
+if curl -s http://localhost:3001 > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Grafana is running (http://localhost:3001)${NC}"
 else
     echo -e "${YELLOW}⚠ Grafana is starting (may take a moment)...${NC}"
 fi
 
-# Check Jaeger
-if curl -s http://localhost:16686 > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Jaeger is running (http://localhost:16686)${NC}"
-else
-    echo -e "${YELLOW}⚠ Jaeger is starting (may take a moment)...${NC}"
-fi
-
 # Check Prometheus
-if curl -s http://localhost:9090 > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Prometheus is running (http://localhost:9090)${NC}"
+if curl -s http://localhost:9091 > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Prometheus is running (http://localhost:9091)${NC}"
 else
     echo -e "${YELLOW}⚠ Prometheus is starting (may take a moment)...${NC}"
 fi
 
 # Check Loki
-if curl -s http://localhost:3100 > /dev/null 2>&1; then
+if curl -s http://localhost:3101 > /dev/null 2>&1; then
     echo -e "${GREEN}✓ Loki is running${NC}"
 else
     echo -e "${YELLOW}⚠ Loki is starting (may take a moment)...${NC}"
@@ -86,13 +79,20 @@ echo -e "${GREEN}Services started successfully!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
 echo -e "Dashboards available at:"
-echo -e "  ${YELLOW}Grafana:${NC}     http://localhost:3000    (admin/admin)"
-echo -e "  ${YELLOW}Jaeger:${NC}      http://localhost:16686   (Traces)"
-echo -e "  ${YELLOW}Prometheus:${NC}  http://localhost:9090    (Metrics)"
-echo -e "  ${YELLOW}Loki:${NC}        http://localhost:3100    (Logs API)"
+echo -e "  ${YELLOW}Grafana:${NC}     http://localhost:3001    (admin/admin)"
+echo -e "  ${YELLOW}Prometheus:${NC}  http://localhost:9091    (Metrics)"
+echo -e "  ${YELLOW}Loki:${NC}        http://localhost:3101    (Logs API)"
 echo ""
 echo -e "${YELLOW}Note: Services will be fully ready in 30-60 seconds${NC}"
 echo -e "${YELLOW}Starting frontend development server...${NC}"
 echo ""
+
+# Ensure node_modules are present (avoids TS2307 on fresh clones)
+echo -e "${YELLOW}Checking npm dependencies...${NC}"
+if ! node -e "require.resolve('@opentelemetry/sdk-trace-web')" > /dev/null 2>&1; then
+    echo -e "${YELLOW}Installing npm dependencies (first run)...${NC}"
+    npm install
+fi
+
 npm run start:local
 

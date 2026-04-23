@@ -2,6 +2,7 @@ import { WebTracerProvider, ConsoleSpanExporter, SimpleSpanProcessor } from '@op
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import type { Span } from '@opentelemetry/api';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { FetchInstrumentation } from '@opentelemetry/instrumentation-fetch';
 import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xml-http-request';
@@ -48,21 +49,30 @@ const initializeOpenTelemetry = (): void => {
   registerInstrumentations({
     instrumentations: [
       new FetchInstrumentation({
-        requestHook: (span, request) => {
-          span.setAttribute('http.url', request.url);
-          span.setAttribute('http.method', request.method);
-        },
-        responseHook: (span, response) => {
-          span.setAttribute('http.status_code', response.status);
+        applyCustomAttributesOnSpan: (span: Span, request: Request | RequestInit, result) => {
+          const url = request instanceof Request ? request.url : undefined;
+          const method = request instanceof Request ? request.method : undefined;
+
+          if (url) span.setAttribute('http.url', url);
+          if (method) span.setAttribute('http.method', method);
+
+          const status = (result as any)?.status;
+          if (typeof status === 'number') {
+            span.setAttribute('http.status_code', status);
+          }
         }
       }),
       new XMLHttpRequestInstrumentation({
-        requestHook: (span, request) => {
-          span.setAttribute('http.method', request.method);
-          span.setAttribute('http.url', request.url);
-        },
-        responseHook: (span, xhr) => {
-          span.setAttribute('http.status_code', xhr.status);
+        applyCustomAttributesOnSpan: (span: Span, xhr: XMLHttpRequest) => {
+          const url = (xhr as any)?.responseURL;
+          if (typeof url === 'string' && url.length > 0) {
+            span.setAttribute('http.url', url);
+          }
+
+          const status = (xhr as any)?.status;
+          if (typeof status === 'number') {
+            span.setAttribute('http.status_code', status);
+          }
         }
       })
     ]
