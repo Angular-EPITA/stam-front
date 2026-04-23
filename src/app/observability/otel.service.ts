@@ -119,8 +119,10 @@ export class OtelService {
     }
 
     // Also log to OpenTelemetry API if available
-    if (typeof window !== 'undefined' && (window as unknown as Record<string, unknown>).OTEL_LOGGER) {
-      const logger = (window as unknown as Record<string, Record<string, unknown>>).OTEL_LOGGER;
+    if (typeof window !== 'undefined' && (window as unknown as Record<string, unknown>)['OTEL_LOGGER']) {
+      const logger = (window as unknown as Record<string, unknown>)['OTEL_LOGGER'] as {
+        emit: (record: Record<string, unknown>) => void;
+      };
       logger.emit({
         severityNumber: this.getSeverityNumber(level),
         severityText: level.toUpperCase(),

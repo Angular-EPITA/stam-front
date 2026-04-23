@@ -64,7 +64,7 @@ export class ObservabilityExampleService {
   exampleErrorHandling(): void {
     try {
       // Code that might fail
-      void (null as unknown as Record<string, Record<string, unknown>>).someProperty.value;
+      void (null as unknown as Record<string, Record<string, unknown>>)['someProperty']['value'];
     } catch (error) {
       this.otel.error(
         `Error occurred: ${(error as Error).message}`,
