@@ -120,7 +120,7 @@
       },
       "targets": [
         {
-          "expr": "{service_name=\"stam-front\"}",
+          "expr": "{job=\"stam-front\"}",
           "refId": "A"
         }
       ],
