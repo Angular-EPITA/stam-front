@@ -4,6 +4,13 @@ import { Injectable } from '@angular/core';
   providedIn: 'root'
 })
 export class OtelService {
+  private readonly originalConsole = {
+    log: console.log.bind(console),
+    warn: console.warn.bind(console),
+    error: console.error.bind(console),
+    debug: console.debug.bind(console),
+  };
+
   private logBuffer: Array<{
     timestamp: number;
     level: 'info' | 'warn' | 'error' | 'debug';
@@ -12,36 +19,79 @@ export class OtelService {
     data?: any;
   }> = [];
 
+  private flushTimer: number | null = null;
+  private readonly flushIntervalMs = 5000;
+  private readonly flushDebounceMs = 500;
+  private readonly heartbeatIntervalMs = 60000;
+  private startTimestamp = Date.now();
+
   constructor() {
     this.initializeLogger();
+    this.installAutoFlush();
+    this.debug('OtelService initialized', 'APP_INIT', {
+      href: typeof window !== 'undefined' ? window.location.href : undefined,
+    });
   }
 
   private initializeLogger(): void {
-    // Override console methods to capture logs
-    const originalLog = console.log;
-    const originalWarn = console.warn;
-    const originalError = console.error;
-    const originalDebug = console.debug;
-
     console.log = (...args) => {
       this.log('info', args.join(' '));
-      originalLog.apply(console, args);
+      this.originalConsole.log(...args);
     };
 
     console.warn = (...args) => {
       this.log('warn', args.join(' '));
-      originalWarn.apply(console, args);
+      this.originalConsole.warn(...args);
     };
 
     console.error = (...args) => {
       this.log('error', args.join(' '));
-      originalError.apply(console, args);
+      this.originalConsole.error(...args);
     };
 
     console.debug = (...args) => {
       this.log('debug', args.join(' '));
-      originalDebug.apply(console, args);
+      this.originalConsole.debug(...args);
     };
+  }
+
+  private installAutoFlush(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.setInterval(() => {
+      this.flushLogs();
+    }, this.flushIntervalMs);
+
+    window.setInterval(() => {
+      const uptimeMs = Date.now() - this.startTimestamp;
+      this.debug('heartbeat', 'APP_HEARTBEAT', { uptime_ms: uptimeMs });
+    }, this.heartbeatIntervalMs);
+
+    const flushNow = () => this.flushLogs();
+    window.addEventListener('beforeunload', flushNow);
+    window.addEventListener('pagehide', flushNow);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        this.flushLogs();
+      }
+    });
+  }
+
+  private scheduleFlush(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (this.flushTimer != null) {
+      return;
+    }
+
+    this.flushTimer = window.setTimeout(() => {
+      this.flushTimer = null;
+      this.flushLogs();
+    }, this.flushDebounceMs);
   }
 
   /**
@@ -63,9 +113,9 @@ export class OtelService {
 
     this.logBuffer.push(logEntry);
 
-    // Send to OTLP collector if buffer reaches threshold
-    if (this.logBuffer.length >= 10) {
-      this.flushLogs();
+    // Flush quickly for important logs, otherwise batch
+    if (level !== 'debug' || this.logBuffer.length >= 10) {
+      this.scheduleFlush();
     }
 
     // Also log to OpenTelemetry API if available
@@ -152,7 +202,7 @@ export class OtelService {
       keepalive: true
     }).catch((error) => {
       // Silently fail if collector is not available
-      console.error('Failed to send logs to OTLP collector:', error);
+      this.originalConsole.error('Failed to send logs to OTLP collector:', error);
     });
   }
 
